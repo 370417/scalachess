@@ -170,6 +170,7 @@ g4 {[%emt 0.200]} 34. Rxg4 {[%emt 0.172]} 0-1"""
         drawnGame.situation.winner must beNone
         drawnGame.situation.status must beSome(Status.Draw)
       }
+    }
 
     "Be drawn on multiple bishops on the opposite color" in {
       val position     = FEN("8/6P1/8/8/1b6/8/8/5B2 w - -")
