@@ -3,7 +3,7 @@ package chess
 import chess.format.Uci
 import cats.syntax.option.*
 
-sealed trait Action {
+sealed trait Action:
 
   def before: Board
 
@@ -22,7 +22,6 @@ sealed trait Action {
   def asDrop: Option[Drop] = None
 
   def asPass: Option[Pass] = None
-}
 
 case class Move(
     piece: Piece,

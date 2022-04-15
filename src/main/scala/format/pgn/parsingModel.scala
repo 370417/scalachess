@@ -97,7 +97,6 @@ case class Pass(metas: Metas = Metas.empty) extends San {
 
   def pass(situation: Situation): Validated[String, chess.Pass] =
     situation.pass()
-}
 
 case class InitialPosition(
     comments: List[String]
