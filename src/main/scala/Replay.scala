@@ -8,17 +8,17 @@ import chess.format.pgn.San
 import chess.format.pgn.{ Parser, Reader, Tag, Tags }
 import chess.format.{ FEN, Forsyth, Uci }
 
-case class Replay(setup: Game, moves: List[MoveOrDrop], state: Game):
+case class Replay(setup: Game, moves: List[Action], state: Game):
 
   lazy val chronoMoves = moves.reverse
 
-  def addMove(moveOrDrop: MoveOrDrop) =
+  def addMove(action: Action) =
     copy(
-      moves = moveOrDrop.left.map(_.applyVariantEffect) :: moves,
-      state = moveOrDrop.fold(state.apply, state.applyDrop)
+      moves = action.asMove.fold(action) { _.applyVariantEffect } :: moves,
+      state = state(action)
     )
 
-  def moveAtPly(ply: Int): Option[MoveOrDrop] =
+  def moveAtPly(ply: Int): Option[Action] =
     chronoMoves lift (ply - 1 - setup.startedAtTurn)
 
 object Replay:
@@ -50,8 +50,8 @@ object Replay:
     sans match
       case Nil => valid(Nil)
       case san :: rest =>
-        san(game.situation) flatMap { moveOrDrop =>
-          val newGame = moveOrDrop.fold(game.apply, game.applyDrop)
+        san(game.situation) flatMap { action =>
+          val newGame = game(action)
           recursiveGames(newGame, rest) map { newGame :: _ }
         }
 
@@ -76,9 +76,9 @@ object Replay:
         case (san, sanStr) :: rest =>
           san(g.situation).fold(
             err => (Nil, err.some),
-            moveOrDrop => {
-              val newGame = moveOrDrop.fold(g.apply, g.applyDrop)
-              val uci     = moveOrDrop.fold(_.toUci, _.toUci)
+            action => {
+              val newGame = g(action)
+              val uci     = action.toUci
               mk(newGame, rest) match {
                 case (next, msg) => ((newGame, Uci.WithSan(uci, sanStr)) :: next, msg)
               }
@@ -98,8 +98,8 @@ object Replay:
     sans match
       case Nil => valid(Nil)
       case san :: rest =>
-        san(sit) flatMap { moveOrDrop =>
-          val after = Situation(moveOrDrop.fold(_.finalizeAfter, _.finalizeAfter), !sit.color)
+        san(sit) flatMap { action =>
+          val after = Situation(action.finalizeAfter, !sit.color)
           recursiveSituations(after, rest) map { after :: _ }
         }
 
@@ -110,8 +110,8 @@ object Replay:
     ucis match
       case Nil => valid(Nil)
       case uci :: rest =>
-        uci(sit) andThen { moveOrDrop =>
-          val after = Situation(moveOrDrop.fold(_.finalizeAfter, _.finalizeAfter), !sit.color)
+        uci(sit) andThen { action =>
+          val after = Situation(action.finalizeAfter, !sit.color)
           recursiveSituationsFromUci(after, rest) map { after :: _ }
         }
 
@@ -119,8 +119,8 @@ object Replay:
     ucis match
       case Nil => valid(replay)
       case uci :: rest =>
-        uci(replay.state.situation) andThen { moveOrDrop =>
-          recursiveReplayFromUci(replay addMove moveOrDrop, rest)
+        uci(replay.state.situation) andThen { action =>
+          recursiveReplayFromUci(replay addMove action, rest)
         }
 
   private def initialFenToSituation(initialFen: Option[FEN], variant: chess.variant.Variant): Situation = {
@@ -182,8 +182,8 @@ object Replay:
         sans match
           case Nil => invalid(s"Can't find $atFenTruncated, reached ply $ply")
           case san :: rest =>
-            san(sit) flatMap { moveOrDrop =>
-              val after = moveOrDrop.fold(_.finalizeAfter, _.finalizeAfter)
+            san(sit) flatMap { action =>
+              val after = action.finalizeAfter
               val fen   = Forsyth >> Game(Situation(after, Color.fromPly(ply)), turns = ply)
               if (compareFen(fen)) Validated.valid(ply)
               else recursivePlyAtFen(Situation(after, !sit.color), rest, ply + 1)

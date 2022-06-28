@@ -20,13 +20,14 @@ object UciDump:
     if (moves.isEmpty) Validated.valid(Nil)
     else Replay(moves, initialFen, variant) andThen (_.valid) map apply(force960Notation)
 
-  def move(variant: Variant, force960Notation: Boolean = false)(mod: MoveOrDrop): String =
-    mod match
-      case Left(m) =>
+  def move(variant: Variant, force960Notation: Boolean = false)(action: Action): String =
+    action match
+      case m: Move =>
         m.castle.fold(m.toUci.uci) {
           case ((kf, kt), (rf, _))
               if force960Notation || kf == kt || variant.chess960 || variant.fromPosition =>
             kf.key + rf.key
           case ((kf, kt), _) => kf.key + kt.key
         }
-      case Right(d) => d.toUci.uci
+      case d: Drop => d.toUci.uci
+      case p: Pass => p.toUci.uci

@@ -18,7 +18,7 @@ object Sans:
 // Standard Algebraic Notation
 sealed trait San:
 
-  def apply(situation: Situation): Validated[String, MoveOrDrop]
+  def apply(situation: Situation): Validated[String, Action]
 
   def metas: Metas
 
@@ -45,7 +45,7 @@ case class Std(
     metas: Metas = Metas.empty
 ) extends San:
 
-  def apply(situation: Situation) = move(situation) map Left.apply
+  def apply(situation: Situation) = move(situation)
 
   override def withSuffixes(s: Suffixes) =
     copy(
@@ -82,12 +82,22 @@ case class Drop(
     metas: Metas = Metas.empty
 ) extends San:
 
-  def apply(situation: Situation) = drop(situation) map Right.apply
+  def apply(situation: Situation) = drop(situation)
 
   def withMetas(m: Metas) = copy(metas = m)
 
   def drop(situation: Situation): Validated[String, chess.Drop] =
     situation.drop(role, pos)
+
+case class Pass(metas: Metas = Metas.empty) extends San {
+
+  def apply(situation: Situation) = pass(situation)
+
+  def withMetas(m: Metas) = copy(metas = m)
+
+  def pass(situation: Situation): Validated[String, chess.Pass] =
+    situation.pass()
+}
 
 case class InitialPosition(
     comments: List[String]
@@ -122,7 +132,7 @@ case class Castle(
     metas: Metas = Metas.empty
 ) extends San:
 
-  def apply(situation: Situation) = move(situation) map Left.apply
+  def apply(situation: Situation) = move(situation)
 
   def withMetas(m: Metas) = copy(metas = m)
 

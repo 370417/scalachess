@@ -106,6 +106,11 @@ abstract class Variant private[variant] (
   def drop(situation: Situation, role: Role, pos: Pos): Validated[String, Drop] =
     Validated.invalid(s"$this variant cannot drop $situation $role $pos")
 
+  def pass(situation: Situation): Validated[String, Pass] =
+    if (!situation.board.allowPass) Validated.invalid("Null moves are not allowed")
+    else if (situation.board.check(situation.color)) Validated.invalid("Cannot make null move while in check")
+    else Validated.valid(Pass(situation))
+
   def staleMate(situation: Situation): Boolean = !situation.check && situation.moves.isEmpty
 
   def checkmate(situation: Situation) = situation.check && situation.moves.isEmpty

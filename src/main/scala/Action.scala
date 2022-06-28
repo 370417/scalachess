@@ -3,6 +3,27 @@ package chess
 import chess.format.Uci
 import cats.syntax.option.*
 
+sealed trait Action {
+
+  def before: Board
+
+  def finalizeAfter: Board
+
+  def situationBefore: Situation
+
+  def situationAfter: Situation
+
+  def color: Color
+
+  def toUci: Uci
+
+  def asMove: Option[Move] = None
+
+  def asDrop: Option[Drop] = None
+
+  def asPass: Option[Pass] = None
+}
+
 case class Move(
     piece: Piece,
     orig: Pos,
@@ -14,7 +35,7 @@ case class Move(
     castle: Option[((Pos, Pos), (Pos, Pos))],
     enpassant: Boolean,
     metrics: MoveMetrics = MoveMetrics()
-):
+) extends Action:
   def before = situationBefore.board
 
   def situationAfter = Situation(finalizeAfter, !piece.color)
@@ -88,13 +109,15 @@ case class Move(
 
   override def toString = s"$piece ${toUci.uci}"
 
+  override def asMove = Some(this)
+
 case class Drop(
     piece: Piece,
     pos: Pos,
     situationBefore: Situation,
     after: Board,
     metrics: MoveMetrics = MoveMetrics()
-):
+) extends Action:
 
   def before = situationBefore.board
 
@@ -138,3 +161,44 @@ case class Drop(
   def toUci = Uci.Drop(piece.role, pos)
 
   override def toString = toUci.uci
+
+  override def asDrop = Some(this)
+
+case class Pass(
+    situationBefore: Situation,
+    metrics: MoveMetrics = MoveMetrics()
+) extends Action:
+
+  def before = situationBefore.board
+
+  def after = situationBefore.board
+
+  def finalizeAfter: Board = {
+    val board = after.variant.finalizeBoard(
+      after updateHistory { h =>
+        h.copy(
+          lastMove = Option(Uci.Pass()),
+          unmovedRooks = before.unmovedRooks,
+          halfMoveClock = h.halfMoveClock + 1
+        )
+      },
+      toUci,
+      none
+    )
+
+    board updateHistory { h =>
+      val basePositionHashes =
+        if (h.positionHashes.isEmpty) Hash(situationBefore) else board.history.positionHashes
+      h.copy(positionHashes = Hash(Situation(board, !color)) ++ basePositionHashes)
+    }
+  }
+
+  def situationAfter = Situation(finalizeAfter, !color)
+
+  def color = situationBefore.color
+
+  def withMetrics(m: MoveMetrics) = copy(metrics = m)
+
+  def toUci = Uci.Pass()
+
+  override def asPass = Some(this)

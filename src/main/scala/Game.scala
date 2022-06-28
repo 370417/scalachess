@@ -48,6 +48,12 @@ case class Game(
       newClock.flatMap(_.compensated)
     )
 
+  def apply(action: Action): Game = action match {
+    case m: Move => apply(m)
+    case d: Drop => applyDrop(d)
+    case p: Pass => applyPass(p)
+  }
+
   def drop(
       role: Role,
       pos: Pos,
@@ -67,6 +73,22 @@ case class Game(
       clock = applyClock(drop.metrics, newSituation.status.isEmpty).map(_.value)
     )
 
+  def pass(metrics: MoveMetrics = MoveMetrics()): Validated[String, (Game, Pass)] =
+    situation.pass().map(_ withMetrics metrics) map { pass =>
+      applyPass(pass) -> pass
+    }
+
+  def applyPass(pass: Pass): Game = {
+    val newSituation = pass situationAfter
+
+    copy(
+      situation = newSituation,
+      turns = turns + 1,
+      pgnMoves = pgnMoves :+ pgn.Dumper(pass),
+      clock = applyClock(pass.metrics, newSituation.status.isEmpty).map(_.value)
+    )
+  }
+
   private def applyClock(
       metrics: MoveMetrics,
       gameActive: => Boolean
@@ -81,10 +103,12 @@ case class Game(
 
   def apply(uci: Uci.Move): Validated[String, (Game, Move)] = apply(uci.orig, uci.dest, uci.promotion)
   def apply(uci: Uci.Drop): Validated[String, (Game, Drop)] = drop(uci.role, uci.pos)
-  def apply(uci: Uci): Validated[String, (Game, MoveOrDrop)] =
+  def apply(uci: Uci.Pass): Validated[String, (Game, Pass)] = ???
+  def apply(uci: Uci): Validated[String, (Game, Action)] =
     uci match
-      case u: Uci.Move => apply(u) map { case (g, m) => g -> Left(m) }
-      case u: Uci.Drop => apply(u) map { case (g, d) => g -> Right(d) }
+      case u: Uci.Move => apply(u)
+      case u: Uci.Drop => apply(u)
+      case u: Uci.Pass => apply(u)
 
   def player = situation.color
 
@@ -108,6 +132,13 @@ case class Game(
   def withPlayer(c: Color) = copy(situation = situation.copy(color = c))
 
   def withTurns(t: Int) = copy(turns = t)
+
+  def withPassing(allow: Boolean): Game =
+    copy(
+      situation = situation.copy(
+        board = board.copy(allowPass = allow)
+      )
+    )
 
 object Game:
   def apply(variant: chess.variant.Variant): Game =
