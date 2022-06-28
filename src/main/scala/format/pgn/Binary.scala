@@ -39,6 +39,8 @@ object Binary {
     def moves(bs: List[Byte]): List[String]          = moves(bs, maxPlies)
     def moves(bs: List[Byte], nb: Int): List[String] = intMoves(bs map toInt, nb)
 
+    // TODO: support passing
+    // see comment below for more info
     def intMoves(bs: List[Int], pliesToGo: Int): List[String] =
       bs match {
         case _ if pliesToGo <= 0 => Nil
@@ -127,6 +129,13 @@ object Binary {
 
     import Encoding._
 
+    // TODO: support passing
+    // is this even possible in the current format?
+    // alternatively, we could choose to not support null moves in binary
+    // if studies don't use binary
+    // or we could make the consumer of this lib deal with it
+    // eg representing null moves as king to its own square (or another piece if there is no king)
+    // then the consumer would need to interpret the pgn and convert between regular san and null moves
     def move(str: String): List[Byte] =
       (str match {
         case pos if pos.length == 2 => simplePawn(pos)

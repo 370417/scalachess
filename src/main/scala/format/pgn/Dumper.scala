@@ -71,4 +71,13 @@ object Dumper {
       data,
       data.finalizeAfter situationOf !data.color
     )
+
+  def apply(data: chess.Pass): String = data.toUci.uci
+
+  def apply(data: chess.Action): String =
+    data match {
+      case m: chess.Move => apply(m)
+      case d: chess.Drop => apply(d)
+      case p: chess.Pass => apply(p)
+    }
 }

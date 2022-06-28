@@ -6,7 +6,8 @@ case class Board(
     pieces: PieceMap,
     history: History,
     variant: Variant,
-    crazyData: Option[Crazyhouse.Data] = None
+    crazyData: Option[Crazyhouse.Data] = None,
+    allowPass: Boolean = false
 ) {
 
   def apply(at: Pos): Option[Piece] = pieces get at
