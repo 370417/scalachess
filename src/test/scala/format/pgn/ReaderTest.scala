@@ -81,8 +81,9 @@ class ReaderTest extends ChessTest:
     }
     "promoting to a rook" in {
       Reader.full(fromLichessBadPromotion) must beValid.like { case Complete(replay) =>
-        replay.chronoMoves lift 10 must beSome { case action =>
-          action.asMove.flatMap(_.promotion) must_== Option(Rook)
+        replay.chronoMoves lift 10 must beSome { (a: Action) => a match
+            case action =>
+              action.asMove.flatMap(_.promotion) must_== Option(Rook)
         }
       }
     }
@@ -100,8 +101,9 @@ class ReaderTest extends ChessTest:
     }
     "crazyhouse 1" in {
       Reader.full(crazyhouse1) must beValid.like { case Complete(replay) =>
-        replay.chronoMoves lift 11 must beSome { case move =>
-          move.toUci.uci must_== "P@c6"
+        replay.chronoMoves lift 11 must beSome { (a: Action) => a match
+            case move =>
+              move.toUci.uci must_== "P@c6"
         }
       }
     }
@@ -149,8 +151,9 @@ class ReaderTest extends ChessTest:
   }
   "exotic notation from clono.no" in {
     Reader.full(clonoNoExoticNotation) must beValid.like { case Complete(replay) =>
-      replay.chronoMoves lift 42 must beSome { case move: chess.Move =>
-        move.toUci.uci must_== "e7f8q"
+      replay.chronoMoves lift 42 must beSome { (a: Action) => a match
+          case move: chess.Move =>
+            move.toUci.uci must_== "e7f8q"
       }
     }
   }

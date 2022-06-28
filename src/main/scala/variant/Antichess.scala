@@ -94,9 +94,6 @@ case object Antichess
   // In this game variant, a king is a valid promotion
   override def isValidPromotion(_promotion: Option[PromotableRole]) = true
 
-  // In this game variant, a king is a valid promotion
-  override def isValidPromotion(_promotion: Option[PromotableRole]) = true
-
   override val roles = List(Rook, Knight, King, Bishop, Queen, Pawn)
 
   override val promotableRoles: List[PromotableRole] = List(Queen, Rook, Bishop, Knight, King)
