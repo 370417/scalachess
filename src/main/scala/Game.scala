@@ -48,11 +48,10 @@ case class Game(
       newClock.flatMap(_.compensated)
     )
 
-  def apply(action: Action): Game = action match {
+  def apply(action: Action): Game = action match
     case m: Move => apply(m)
     case d: Drop => applyDrop(d)
     case p: Pass => applyPass(p)
-  }
 
   def drop(
       role: Role,
@@ -78,7 +77,7 @@ case class Game(
       applyPass(pass) -> pass
     }
 
-  def applyPass(pass: Pass): Game = {
+  def applyPass(pass: Pass): Game =
     val newSituation = pass situationAfter
 
     copy(
@@ -87,7 +86,6 @@ case class Game(
       pgnMoves = pgnMoves :+ pgn.Dumper(pass),
       clock = applyClock(pass.metrics, newSituation.status.isEmpty).map(_.value)
     )
-  }
 
   private def applyClock(
       metrics: MoveMetrics,
@@ -103,7 +101,7 @@ case class Game(
 
   def apply(uci: Uci.Move): Validated[String, (Game, Move)] = apply(uci.orig, uci.dest, uci.promotion)
   def apply(uci: Uci.Drop): Validated[String, (Game, Drop)] = drop(uci.role, uci.pos)
-  def apply(uci: Uci.Pass): Validated[String, (Game, Pass)] = ???
+  def apply(uci: Uci.Pass): Validated[String, (Game, Pass)] = pass()
   def apply(uci: Uci): Validated[String, (Game, Action)] =
     uci match
       case u: Uci.Move => apply(u)

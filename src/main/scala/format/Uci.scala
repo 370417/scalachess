@@ -74,7 +74,7 @@ object Uci:
         pos  <- Pos.fromKey(posS)
       } yield Drop(role, pos)
 
-  case class Pass() extends Uci {
+  case class Pass() extends Uci:
 
     def uci = "0000"
 
@@ -84,7 +84,6 @@ object Uci:
       Pos.A1 -> Pos.A1 // TODO: should be centered on king instead? What about variants with no king?
 
     def apply(situation: Situation) = situation.pass()
-  }
 
   case class WithSan(uci: Uci, san: String)
 

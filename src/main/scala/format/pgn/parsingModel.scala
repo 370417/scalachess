@@ -89,7 +89,7 @@ case class Drop(
   def drop(situation: Situation): Validated[String, chess.Drop] =
     situation.drop(role, pos)
 
-case class Pass(metas: Metas = Metas.empty) extends San {
+case class Pass(metas: Metas = Metas.empty) extends San:
 
   def apply(situation: Situation) = pass(situation)
 

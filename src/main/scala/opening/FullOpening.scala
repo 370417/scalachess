@@ -7,11 +7,10 @@ final class FullOpening(
     val fen: String
 ):
 
-  val (family: OpeningFamily, variation: Option[OpeningVariation]) = name.split(":", 2) match {
+  val (family: OpeningFamily, variation: Option[OpeningVariation]) = name.split(":", 2) match
     case Array(f, v) => OpeningFamily(f.trim)    -> Some(OpeningVariation(v.takeWhile(',' !=).trim))
     case Array(f)    => OpeningFamily(f.trim)    -> None
     case _           => OpeningFamily(name.trim) -> None
-  }
 
   def ecoName = s"$eco $name"
 
