@@ -113,18 +113,13 @@ object Parser {
     // 10. or 10... but not 0 or 1-0 or 1/2
     val number = (positiveIntString <* !P.charIn('‑', '–', '-', '/') ~ numberSuffix).string
 
-    val forbidNullMove =
-      P.stringIn(List("--", "Z0", "null", "pass", "@@@@"))
-        .?
-        .flatMap(o => o.fold(P.unit)(_ => P.failWith("Lichess does not support null moves").void))
-
     val strMove: P[San] = P
       .recursive[San] { recuse =>
         val variation: P[Sans] =
           (((P.char('(') <* escape) *> recuse.rep0 <* (P.char(')') ~ escape)) <* escape)
             .map(Sans(_))
 
-        ((number.backtrack | (commentary <* escape)).rep0 ~ forbidNullMove).with1 *>
+        (number.backtrack | (commentary <* escape)).rep0.with1 *>
           (((MoveParser.moveWithSuffix ~ nagGlyphs ~ commentary.rep0 ~ nagGlyphs ~ variation.rep0) <* moveExtras.rep0) <* escape).backtrack
             .map { case ((((san, glyphs), comments), glyphs2), variations) =>
               san withComments comments withVariations variations mergeGlyphs (glyphs merge glyphs2)
@@ -212,11 +207,13 @@ object Parser {
 
     val castle: P[San] = (qCastle | kCastle).map(Castle(_))
 
+    val nullMove: P[Pass] = P.stringIn(List("--", "Z0", "null", "pass", "@@@@")).as(Pass())
+
     val standard: P[San] = P.oneOf(
       (disambiguatedPawn :: pawn :: disambiguated :: ambigous :: drop :: pawnDrop :: Nil).map(_.backtrack)
     )
 
-    val move: P[San] = (castle | standard).withContext("Invalid chess move")
+    val move: P[San] = (castle | nullMove | standard).withContext("Invalid chess move")
     val moveWithSuffix: P[San] = (move ~ suffixes <* escape)
       .map { case (std, suf) =>
         std withSuffixes suf

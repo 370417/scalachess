@@ -19,6 +19,7 @@ object UciCharPair {
           toChar(pos),
           dropRole2charMap.getOrElse(role, voidChar)
         )
+      case Uci.Pass() => UciCharPair('#', '#')
     }
 
   private[format] object implementation {
