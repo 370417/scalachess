@@ -32,6 +32,9 @@ object Reader {
   def fullWithSans(parsed: ParsedPgn, op: Sans => Sans): Result =
     makeReplay(makeGame(parsed.tags), op(parsed.sans))
 
+  def fullWithSans(parsed: ParsedPgn, op: Sans => Sans, allowPass: Boolean): Result =
+    makeReplay(makeGame(parsed.tags) withPassing allowPass, op(parsed.sans))
+
   def movesWithSans(moveStrs: Iterable[String], op: Sans => Sans, tags: Tags): Validated[String, Result] =
     Parser.moves(moveStrs) map { moves =>
       makeReplay(makeGame(tags), op(moves))
