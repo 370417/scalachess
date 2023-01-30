@@ -137,4 +137,27 @@ class HordeVariantTest extends ChessTest:
       }
     }
 
+    "Can castle long after h-file rook moves" in {
+      import Pos.*
+      val moves = List(
+        A4 -> A5,
+        H7 -> H5,
+        A3 -> A4,
+        B8 -> C6,
+        A2 -> A3,
+        B7 -> B6,
+        A1 -> A2,
+        C8 -> B7,
+        D4 -> D5,
+        D7 -> D6,
+        D3 -> D4,
+        H8 -> H6, // rook move
+        C5 -> D6,
+        D8 -> D6,
+        D2 -> D3,
+        E8 -> C8 // long castle
+      )
+      Game(Horde).playMoves(moves*) must beValid
+    }
+
   }
